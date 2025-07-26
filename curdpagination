@@ -1,0 +1,553 @@
+here in this operation 1st create the student
+ng generate service student
+
+================================================
+
+then create the service 
+ng g s service student
+
+================================================
+
+then write the html and ts logic 
+
+================================================
+
+write service logic
+
+================================================
+
+i install bootstrap for the design and for use form
+that i set in the angular.json in build part to this below line in styles
+"node_modules/bootstrap/dist/css/bootstrap.min.css",
+
+
+npm install bootstrap
+
+
+================================================
+
+set the formModule for the form 
+
+================================================
+
+then i want to set data little bit of the dynamic so i install 1st 
+npm install cors
+
+================================================
+
+i want to data what i add that i want to set in the json so i create one db.json file
+
+which data i add that i want to display in table as well as set in the json file so i install
+npm install cors
+
+then in new terminal give the below command
+json-server --watch db.json --port 3000
+
+then in new terminal again give command for the
+node server.js
+
+for that need to set one file like proxy.conf.json
+in that set the below logic:
+
+{
+  "/students": {
+    "target": "http://172.16.17.205",
+    "secure": false,
+    "changeOrigin": true
+  }
+}
+
+================================================
+
+one file more to create for that data store in both server.js file 
+set below type of code 
+
+// server.js
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+
+const app = express();
+const port = 3000; // You can also use 172.16.17.205 if needed
+
+app.use(cors());
+app.use(bodyParser.json());
+
+// In-memory storage for demo purposes
+let students = [];
+let currentId = 1;
+
+// GET all students
+app.get('/students', (req, res) => {
+  res.json(students);
+});
+
+// POST a new student
+app.post('/students', (req, res) => {
+  const student = { id: currentId++, ...req.body };
+  students.push(student);
+  res.status(201).json(student);
+});
+
+// PUT to update a student
+app.put('/students/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  const index = students.findIndex(s => s.id === id);
+  if (index !== -1) {
+    students[index] = { id, ...req.body };
+    res.json(students[index]);
+  } else {
+    res.status(404).send('Student not found');
+  }
+});
+
+// DELETE a student
+app.delete('/students/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  students = students.filter(s => s.id !== id);
+  res.status(204).send();
+});
+
+// Start server
+app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
+});
+
+================================================
+
+here for the api use the HttpClientModule in the app.module.ts file 
+
+================================================
+
+app.component.html file logic
+
+<router-outlet></router-outlet>
+
+================================================
+
+app.module.ts
+
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+
+import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
+import { StudentsComponent } from './students/students.component';
+import { HttpClientModule } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
+@NgModule({
+  declarations: [
+    AppComponent,
+    StudentsComponent
+  ],
+  imports: [
+    BrowserModule,
+    AppRoutingModule,
+    HttpClientModule,
+    FormsModule
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+
+================================================
+
+app-routing.module.ts
+
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
+import { StudentsComponent } from './students/students.component';
+
+const routes: Routes = [
+   { path: '', redirectTo: 'students', pathMatch: 'full' },
+  { path: 'students', component: StudentsComponent }
+];
+
+@NgModule({
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule]
+})
+export class AppRoutingModule { }
+
+================================================
+
+student.component.html
+
+<div style="max-width: 800px; margin: auto; padding-top: 5%;">
+  <h2>Student Form</h2>
+  <!-- <form (ngSubmit)="saveStudent()" class="student_main">
+    <input type="text" [(ngModel)]="studentForm.fullname" name="fullname" placeholder="Full Name"  minlength="3" maxlength="50" pattern="[A-Za-z ]+" required class="form-control main2 mb-2" title="Full Name must only contain letters and spaces"/>
+    <input type="email" [(ngModel)]="studentForm.email" name="email" placeholder="Email" required class="form-control main2 mb-2" />
+    <input type="mobile" [(ngModel)]="studentForm.mobile" name="mobile" placeholder="Mobile" required pattern="[0-9]{10}" maxlength="10" class="form-control main2 mb-2" title="Mobile number must be 10 digits"/>
+    <input type="text" [(ngModel)]="studentForm.city" name="city" placeholder="City" required  minlength="2" maxlength="30" pattern="[A-Za-z ]+" class="form-control main2 mb-2" title="City must only contain letters"/>
+    <button type="submit" class="btn btn-primary button">{{ editingId ? 'Update' : 'Add' }}</button>
+  </form> -->
+<!-- <form #studentFormRef="ngForm" (ngSubmit)="saveStudent()" class="student_main"> -->
+  <form #studentFormRef="ngForm" (ngSubmit)="saveStudent(studentFormRef)" class="student_main">
+  <!-- Full Name -->
+  <input
+    type="text"
+    name="fullname"
+    [(ngModel)]="studentForm.fullname"
+    #fullnameRef="ngModel"
+    required
+    minlength="3"
+    maxlength="50"
+    pattern="[A-Za-z ]+"
+    placeholder="Full Name"
+    class="form-control main2 mb-2"
+  />
+  <div *ngIf="fullnameRef.invalid && fullnameRef.touched" class="text-danger small">
+    <div *ngIf="fullnameRef.errors?.['required']">Full Name is required.</div>
+    <div *ngIf="fullnameRef.errors?.['minlength']">Minimum 3 characters required.</div>
+    <div *ngIf="fullnameRef.errors?.['pattern']">Only letters and spaces allowed.</div>
+  </div>
+
+  <!-- Email -->
+  <input
+    type="email"
+    name="email"
+    [(ngModel)]="studentForm.email"
+    #emailRef="ngModel"
+    required
+    email
+    placeholder="Email"
+    class="form-control main2 mb-2"
+  />
+  <div *ngIf="emailRef.invalid && emailRef.touched" class="text-danger small">
+    <div *ngIf="emailRef.errors?.['required']">Email is required.</div>
+    <div *ngIf="emailRef.errors?.['email']">Enter a valid email address.</div>
+  </div>
+
+  <!-- Mobile -->
+  <input
+    type="tel"
+    name="mobile"
+    [(ngModel)]="studentForm.mobile"
+    #mobileRef="ngModel"
+    required
+    pattern="^[0-9]{10}$"
+    maxlength="10"
+    placeholder="Mobile"
+    class="form-control main2 mb-2"
+  />
+  <div *ngIf="mobileRef.invalid && mobileRef.touched" class="text-danger small">
+    <div *ngIf="mobileRef.errors?.['required']">Mobile number is required.</div>
+    <div *ngIf="mobileRef.errors?.['pattern']">Mobile number must be exactly 10 digits.</div>
+  </div>
+
+  <!-- City -->
+  <input
+    type="text"
+    name="city"
+    [(ngModel)]="studentForm.city"
+    #cityRef="ngModel"
+    required
+    minlength="2"
+    maxlength="30"
+    pattern="[A-Za-z ]+"
+    placeholder="City"
+    class="form-control main2 mb-2"
+  />
+  <div *ngIf="cityRef.invalid && cityRef.touched" class="text-danger small">
+    <div *ngIf="cityRef.errors?.['required']">City is required.</div>
+    <div *ngIf="cityRef.errors?.['minlength']">Minimum 2 characters required.</div>
+    <div *ngIf="cityRef.errors?.['pattern']">Only letters and spaces allowed.</div>
+  </div>
+
+  <!-- Submit Button -->
+  <button type="submit" class="btn btn-primary button" [disabled]="studentFormRef.invalid">
+    {{ editingId ? 'Update' : 'Add' }}
+  </button>
+</form>
+
+  <hr />
+
+  <!-- <h3>All Students</h3> -->
+   <div class="d-flex justify-content-between align-items-center mb-3">
+  <h3>All Students</h3>
+  <input type="text"
+         [(ngModel)]="searchText"
+         placeholder="Search by name"
+         class="form-control"
+         style="max-width: 250px;" />
+</div>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Full Name</th>
+        <th>Email</th>
+        <th>Mobile</th>
+        <th>City</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let student of paginatedStudents">
+        <td>{{ student.fullname }}</td>
+        <td>{{ student.email }}</td>
+        <td>{{ student.mobile }}</td>
+        <td>{{ student.city }}</td>
+        <td>
+          <button class="btn btn-sm btn-info" (click)="editStudent(student)">Edit</button>
+<button class="btn btn-sm btn-danger" (click)="deleteStudent(student.id!)">Delete</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<div class="text-center mt-3">
+  <button *ngFor="let page of [].constructor(totalPages); let i = index"
+          class="btn btn-sm btn-outline-primary m-1"
+          (click)="goToPage(i + 1)">
+    {{ i + 1 }}
+  </button>
+</div>
+
+================================================
+
+students.component.scss
+
+.student_main{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.main2 {
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid rgb(231, 231, 231);
+}
+.button {
+    padding: 10px;
+    width: 50%;
+    background-color: green;
+    border: none;
+    color: #fff;
+    font-size: 14px;
+    border-radius: 5px;
+}
+
+================================================
+
+students.component.ts
+
+import { Component, OnInit } from '@angular/core';
+import { StudentService, Student } from '../student.service';
+import { NgForm } from '@angular/forms';
+
+@Component({
+  selector: 'app-students',
+  templateUrl: './students.component.html',
+  styleUrls: ['./students.component.scss'],
+})
+export class StudentsComponent implements OnInit {
+  students: Student[] = [];
+  studentForm: Student = {
+    fullname: '',
+    email: '',
+    mobile: '',
+    city: '',
+  };
+  
+  editingId: number | undefined;
+  formSubmitted = false;
+  currentPage = 1;
+  itemsPerPage = 4;
+  searchText: string = '';
+
+  constructor(private studentService: StudentService) {}
+
+  ngOnInit(): void {
+    this.loadStudents();
+  }
+
+  loadStudents(): void {
+    this.studentService
+      .getStudents()
+      .subscribe((data) => (this.students = data));
+  }
+
+  // saveStudent(): void {
+  //   console.log (this.editingId);
+  //   if (this.editingId) {
+  //     this.studentService
+  //       .updateStudent(this.editingId, this.studentForm)
+  //       .subscribe(() => {
+  //         this.loadStudents();
+  //         // this.editingId = null;
+  //         this.studentForm = { fullname: '', email: '', mobile: '', city: '' };
+  //       });
+  //   } else {
+  //     console.log(this.studentForm);
+  //     this.studentService.addStudent(this.studentForm).subscribe(() => {
+  //       this.loadStudents();
+  //       this.studentForm = { fullname: '', email: '', mobile: '', city: '' };
+  //     });
+  //   }
+  // }
+
+  saveStudent(form?: NgForm): void {
+    if (this.editingId) {
+      this.studentService
+        .updateStudent(this.editingId, this.studentForm)
+        .subscribe(() => {
+          this.loadStudents();
+          this.editingId = undefined;
+          this.studentForm = { fullname: '', email: '', mobile: '', city: '' };
+          form?.resetForm(); // ✅ Reset the form state
+        });
+    } else {
+      this.studentService.addStudent(this.studentForm).subscribe(() => {
+        this.loadStudents();
+        this.studentForm = { fullname: '', email: '', mobile: '', city: '' };
+        form?.resetForm(); // ✅ Reset the form state
+      });
+    }
+  }
+
+  editStudent(student: Student): void {
+    this.studentForm = { ...student };
+    this.editingId = student.id!;
+  }
+
+  deleteStudent(id: number): void {
+    this.studentService.deleteStudent(id).subscribe(() => {
+      this.loadStudents();
+    });
+  }
+
+  // get paginatedStudents() {
+  //   const start = (this.currentPage - 1) * this.itemsPerPage;
+  //   return this.students.slice(start, start + this.itemsPerPage);
+  // }
+
+  // get totalPages() {
+  //   return Math.ceil(this.students.length / this.itemsPerPage);
+  // }
+
+  get paginatedStudents() {
+    const filtered = this.students.filter((student) =>
+      student.fullname.toLowerCase().includes(this.searchText.toLowerCase())
+    );
+
+    const start = (this.currentPage - 1) * this.itemsPerPage;
+    return filtered.slice(start, start + this.itemsPerPage);
+  }
+
+  get totalPages() {
+    const filtered = this.students.filter((student) =>
+      student.fullname.toLowerCase().includes(this.searchText.toLowerCase())
+    );
+    return Math.ceil(filtered.length / this.itemsPerPage);
+  }
+
+  goToPage(page: number) {
+    this.currentPage = page;
+  }
+}
+
+================================================
+
+students.services.ts
+
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http'; 
+import { Observable } from 'rxjs';
+
+export interface Student {
+  id?: any;
+  fullname: string;
+  email: string;
+  mobile: string;
+  city: string;
+}
+
+
+@Injectable({providedIn: 'root'})
+
+export class StudentService {
+private baseUrl = 'http://localhost:3000/students'; 
+  constructor(private http: HttpClient) { }
+  getStudents(): Observable<Student[]> {
+    return this.http.get<Student[]>(this.baseUrl);
+  }
+
+  getStudent(id: number): Observable<Student> {
+    return this.http.get<Student>(`${this.baseUrl}/${id}`);
+  }
+
+  addStudent(student: Student): Observable<Student> {
+    return this.http.post<Student>(this.baseUrl, student);
+  }
+
+  updateStudent(id: number, student: Student): Observable<Student> {
+    return this.http.put<Student>(`${this.baseUrl}/${id}`, student);
+  }
+
+  deleteStudent(id: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/${id}`);
+  }
+}
+
+================================================
+
+create one db.json file 
+
+================================================
+
+create server.js file 
+
+// server.js
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+
+const app = express();
+const port = 3000; // You can also use 172.16.17.205 if needed
+
+app.use(cors());
+app.use(bodyParser.json());
+
+// In-memory storage for demo purposes
+let students = [];
+let currentId = 1;
+
+// GET all students
+app.get('/students', (req, res) => {
+  res.json(students);
+});
+
+// POST a new student
+app.post('/students', (req, res) => {
+  const student = { id: currentId++, ...req.body };
+  students.push(student);
+  res.status(201).json(student);
+});
+
+// PUT to update a student
+app.put('/students/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  const index = students.findIndex(s => s.id === id);
+  if (index !== -1) {
+    students[index] = { id, ...req.body };
+    res.json(students[index]);
+  } else {
+    res.status(404).send('Student not found');
+  }
+});
+
+// DELETE a student
+app.delete('/students/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  students = students.filter(s => s.id !== id);
+  res.status(204).send();
+});
+
+// Start server
+app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
+});
+
