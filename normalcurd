@@ -1,0 +1,287 @@
+create 2 component
+
+ng g c student-add
+ng g c student-details
+
+================================================
+
+create a service file
+
+ng g c student 
+
+================================================
+
+i install bootstrap for the design and for use form
+that i set in the angular.json in build part to this below line in styles
+"node_modules/bootstrap/dist/css/bootstrap.min.css",
+
+
+npm install bootstrap
+
+================================================
+
+app.component.html
+
+<router-outlet></router-outlet>
+
+app.module.ts
+
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+
+import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
+import { StudentDetailsComponent } from './student-details/student-details.component';
+import { StudentAddComponent } from './student-add/student-add.component';
+import { FormsModule } from '@angular/forms';
+
+@NgModule({
+  declarations: [
+    AppComponent,
+    StudentDetailsComponent,
+    StudentAddComponent
+  ],
+  imports: [
+    BrowserModule,
+    AppRoutingModule,
+    FormsModule
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+
+================================================
+
+app-routing.module.ts
+
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
+import { StudentDetailsComponent } from './student-details/student-details.component';
+import { StudentAddComponent } from './student-add/student-add.component';
+
+const routes: Routes = [
+{ path:'students' , component: StudentDetailsComponent },
+{ path:'add' , component: StudentAddComponent },
+{ path: '', redirectTo: 'students', pathMatch: 'full' }, 
+{ path: '**', redirectTo: 'students' }
+];
+
+@NgModule({
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule]
+})
+export class AppRoutingModule { }
+ 
+================================================
+
+student.service.ts
+
+import { Injectable } from '@angular/core';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class StudentService {
+  private students: any[] = [];
+
+  constructor() { }
+    addStudent(student: any): void {
+    this.students.push(student);
+  }
+
+  getStudents(): any[] {
+    return this.students;
+  }
+updateStudent(index: number, updatedStudent: any) {
+  this.students[index] = updatedStudent;
+}
+
+deleteStudent(index: number) {
+  this.students.splice(index, 1);
+}
+}
+ 
+================================================
+
+student-add.component.html
+
+<form (ngSubmit)="submitForm()" style="max-width: 600px; margin: auto; padding-top: 50px;">
+
+    <button class="btn btn-danger mb-3" [routerLink]="['/students']">Back</button>
+
+  <h2>Student Details Form</h2>
+
+  <div class="table">
+
+    <label for="fullname">Full Name:</label>
+    <input type="text" id="fullname" name="fullname" [(ngModel)]="student.fullname" required>
+
+    <label for="dob">Date of Birth:</label>
+    <input type="date" id="dob" name="dob" [(ngModel)]="student.dob" required>
+
+    <label for="email">Email ID:</label>
+    <input type="email" id="email" name="email" [(ngModel)]="student.email" required>
+
+    <label for="phone">Mobile Number:</label>
+    <input type="tel" id="phone" name="phone" [(ngModel)]="student.phone" pattern="[0-9]{10}" required>
+
+    <label for="address">Address:</label>
+    <textarea id="address" name="address" [(ngModel)]="student.address" rows="3" required></textarea>
+
+  </div>
+
+  <!-- <button type="submit" class="button-success">Submit</button> -->
+   <button type="submit" class="button-success">
+  {{ isEdit ? 'Update' : 'Submit' }}
+</button>
+</form>
+
+================================================
+
+student-add.component.scss
+
+.table {
+    display: flex;
+    flex-direction: column;
+    gap: 10px 0px;
+}
+input {
+    border: 1px solid gray !important;
+    padding: 5px;
+    border-radius: 5px;
+}
+button.button-success {
+    font-size: 20px;
+    width: 100%;
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #00a700;
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+}
+
+================================================
+
+student-add.component.ts
+
+import { Component, OnInit} from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { StudentService } from '../student.service'; 
+
+@Component({
+  selector: 'app-student-add',
+  templateUrl: './student-add.component.html',
+  styleUrls: ['./student-add.component.scss']
+})
+export class StudentAddComponent implements OnInit {
+  student = {
+    fullname: '',
+    dob: '',
+    email: '',
+    phone: '',
+    address: ''
+  };
+  isEdit = false;
+  editIndex: number | null = null;
+
+  constructor(private router: Router , private studentService: StudentService,private route: ActivatedRoute) {}
+
+  ngOnInit(): void {
+    const index = this.route.snapshot.queryParams['index'];
+    if (index !== undefined) {
+      this.isEdit = true;
+      this.editIndex = +index;
+      this.student = { ...this.studentService.getStudents()[this.editIndex] };
+    }
+  }
+
+  // submitForm() {
+  //   this.studentService.addStudent({ ...this.student });
+  //   this.router.navigate(['/students']); 
+  // }
+submitForm() {
+    if (this.isEdit && this.editIndex !== null) {
+      this.studentService.updateStudent(this.editIndex, { ...this.student });
+    } else {
+      this.studentService.addStudent({ ...this.student });
+    }
+    this.router.navigate(['/students']);
+  }
+}
+
+================================================
+
+student-details.component.html
+
+<div class="p-4">
+  <button class="btn btn-primary mb-3" (click)="addRow()">Add</button>
+
+  <table class="table table-bordered table-striped">
+    <thead class="table-dark">
+      <tr>
+        <th>Full Name</th>
+        <th>Date of Birth</th>
+        <th>Email ID</th>
+        <th>Mobile Number</th>
+        <th>Address</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="data-table">
+     <tr *ngFor="let student of students; let i = index">
+        <td>{{ student.fullname }}</td>
+        <td>{{ student.dob }}</td>
+        <td>{{ student.email }}</td>
+        <td>{{ student.phone }}</td>
+        <td>{{ student.address }}</td>
+        <td>
+          <button class="btn btn-sm btn-warning me-1" (click)="editStudent(i)">
+            Edit
+          </button>
+          <button class="btn btn-sm btn-danger" (click)="deleteStudent(i)">
+            Delete
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+================================================
+
+student-details.component.ts
+
+import { Component } from '@angular/core';
+import { Router } from '@angular/router';
+import { StudentService } from '../student.service';
+
+@Component({
+  selector: 'app-student-details',
+  templateUrl: './student-details.component.html',
+  styleUrls: ['./student-details.component.scss']
+})
+export class StudentDetailsComponent {
+    students: any[] = [];
+
+constructor(private router: Router, private studentService: StudentService) {}
+
+ ngOnInit(): void {
+    this.students = this.studentService.getStudents();
+  }
+  addRow(): void {
+    this.router.navigate(['/add']);
+  }
+  // backRow(): void {
+  //   this.router.navigate(['']);
+  // }
+  editStudent(index: number): void {
+  this.router.navigate(['/add'], { queryParams: { index } });
+}
+
+deleteStudent(index: number): void {
+  this.studentService.deleteStudent(index);
+  this.students = this.studentService.getStudents(); // Refresh
+}
+}
