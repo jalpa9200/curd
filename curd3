@@ -1,0 +1,135 @@
+1. create component
+
+ng g c components/login
+ng g c components/dashboard
+ng g c components/users
+
+
+2. Routing Setup
+
+In app-routing.module.ts
+
+const routes: Routes = [
+  { path: '', component: LoginComponent },
+  { path: 'dashboard', component: DashboardComponent },
+  { path: 'users', component: UsersComponent }
+];
+
+3. Fake Admin Login
+
+login.component.ts
+
+import { Component } from '@angular/core';
+import { Router } from '@angular/router';
+
+@Component({
+  selector: 'app-login',
+  templateUrl: './login.component.html'
+})
+export class LoginComponent {
+  email: string = '';
+  password: string = '';
+
+  constructor(private router: Router) {}
+
+  login() {
+    if (this.email === 'admin@gmail.com' && this.password === 'admin123') {
+      localStorage.setItem('adminToken', 'true');  // simple auth
+      this.router.navigate(['/dashboard']);
+    } else {
+      alert('Invalid Credentials');
+    }
+  }
+}
+
+login.component.html
+
+<div class="login-box">
+  <h2>Admin Login</h2>
+  <input type="text" [(ngModel)]="email" placeholder="Email">
+  <input type="password" [(ngModel)]="password" placeholder="Password">
+  <button (click)="login()">Login</button>
+</div>
+
+
+4. CRUD for Users
+
+users.component.ts
+
+import { Component } from '@angular/core';
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+}
+
+@Component({
+  selector: 'app-users',
+  templateUrl: './users.component.html'
+})
+export class UsersComponent {
+  users: User[] = [
+    {id:1, name:'John Doe', email:'john@gmail.com'},
+    {id:2, name:'Jane Smith', email:'jane@gmail.com'}
+  ];
+  newUser: User = {id:0, name:'', email:''};
+  editIndex: number = -1;
+
+  addUser() {
+    this.newUser.id = this.users.length + 1;
+    this.users.push({...this.newUser});
+    this.newUser = {id:0, name:'', email:''};
+  }
+
+  editUser(index: number) {
+    this.newUser = {...this.users[index]};
+    this.editIndex = index;
+  }
+
+  updateUser() {
+    this.users[this.editIndex] = {...this.newUser};
+    this.newUser = {id:0, name:'', email:''};
+    this.editIndex = -1;
+  }
+
+  deleteUser(index: number) {
+    this.users.splice(index, 1);
+  }
+}
+
+
+users.component.html
+
+<h2>User Management</h2>
+<input type="text" [(ngModel)]="newUser.name" placeholder="Name">
+<input type="text" [(ngModel)]="newUser.email" placeholder="Email">
+<button *ngIf="editIndex === -1" (click)="addUser()">Add User</button>
+<button *ngIf="editIndex !== -1" (click)="updateUser()">Update User</button>
+
+<table border="1">
+  <tr>
+    <th>ID</th><th>Name</th><th>Email</th><th>Action</th>
+  </tr>
+  <tr *ngFor="let user of users; let i=index">
+    <td>{{user.id}}</td>
+    <td>{{user.name}}</td>
+    <td>{{user.email}}</td>
+    <td>
+      <button (click)="editUser(i)">Edit</button>
+      <button (click)="deleteUser(i)">Delete</button>
+    </td>
+  </tr>
+</table>
+
+5. Dashboard (Admin Panel)
+
+dashboard.component.html
+
+<h1>Welcome Admin</h1>
+<a routerLink="/users">Manage Users</a>
+
+6. Auth Guard (Optional for Practical)
+
+To protect routes like /dashboard and /users.
+
